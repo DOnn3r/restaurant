@@ -155,4 +155,46 @@ public class DishServiceIntegrationTest {
         assertEquals(Unity.G, mouvement.getUnity());
         assertEquals(LocalDateTime.of(2025, 2, 1, 8, 0), mouvement.getMouvementDate());
     }
+
+    @Test
+    public void testGetAvailableQuantity_NoSorties() {
+        // Créer des ingrédients avec des mouvements de stock (uniquement des entrées)
+        Ingredient oeuf = new Ingredient(
+                3, "Oeuf", LocalDateTime.now(), 1000, Unity.U,
+                List.of(), // historicalPrices (vide pour cet exemple)
+                List.of(
+                        new StockMouvement(1, 3, MouvementType.IN, 100, Unity.U, LocalDateTime.of(2025, 2, 1, 8, 0))
+                )
+        );
+
+        Ingredient pain = new Ingredient(
+                4, "Pain", LocalDateTime.now(), 1000, Unity.U,
+                List.of(), // historicalPrices (vide pour cet exemple)
+                List.of(
+                        new StockMouvement(2, 4, MouvementType.IN, 50, Unity.U, LocalDateTime.of(2025, 2, 1, 8, 0))
+                )
+        );
+
+        Ingredient saucisse = new Ingredient(
+                1, "Saucisse", LocalDateTime.now(), 20, Unity.G,
+                List.of(), // historicalPrices (vide pour cet exemple)
+                List.of(
+                        new StockMouvement(3, 1, MouvementType.IN, 10000, Unity.G, LocalDateTime.of(2025, 2, 1, 8, 0))
+                )
+        );
+
+        Ingredient huile = new Ingredient(
+                2, "Huile", LocalDateTime.now(), 10000, Unity.L,
+                List.of(), // historicalPrices (vide pour cet exemple)
+                List.of(
+                        new StockMouvement(4, 2, MouvementType.IN, 20, Unity.L, LocalDateTime.of(2025, 2, 1, 8, 0))
+                )
+        );
+
+        // Vérifier les quantités disponibles à la date du jour (2025-02-24)
+        assertEquals(100, oeuf.getAvailableQuantity(LocalDate.of(2025, 2, 24)), 0.01);
+        assertEquals(50, pain.getAvailableQuantity(LocalDate.of(2025, 2, 24)), 0.01);
+        assertEquals(10000, saucisse.getAvailableQuantity(LocalDate.of(2025, 2, 24)), 0.01);
+        assertEquals(20, huile.getAvailableQuantity(LocalDate.of(2025, 2, 24)), 0.01);
+    }
 }
