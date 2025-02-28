@@ -57,4 +57,5 @@ public class IngredientPrice {
     public void setIngredient(Ingredient ingredient) {
         this.ingredient = ingredient;
     }
+
 }

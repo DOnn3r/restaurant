@@ -1,9 +1,7 @@
 package org.example.dao;
 
 import org.example.db.DataSource;
-import org.example.entity.Criteria;
-import org.example.entity.Ingredient;
-import org.example.entity.Unity;
+import org.example.entity.*;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -46,27 +44,97 @@ public class IngredientDAO implements CrudOperation<Ingredient> {
 
     @Override
     public List<Ingredient> saveAll(List<Ingredient> entities) {
-        List<Ingredient> ingredients = new ArrayList<>();
-        try(Connection connection = dataSource.getConnection();
-            Statement statement = connection.createStatement()){
+        List<Ingredient> savedIngredients = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection()) {
+            // Désactiver l'auto-commit pour gérer les transactions manuellement
+            connection.setAutoCommit(false);
+
+            // Sauvegarder chaque ingrédient
             for (Ingredient entityToSave : entities) {
-                try {
-                    String sql = statement.executeQuery(
-                            "insert into ingredient values ('" + entityToSave.getId() + "',"
-                                    + " '" + entityToSave.getName() + "',"
-                                    + "'" + entityToSave.getLastModification().toLocalDate() + "',"
-                                    + "'" + entityToSave.getUnitPrice() + "',"
-                                    + "'" + entityToSave.getUnity() + "')")
-                            + "on conflict (id) do update set name = excluded.name, last_modification = excluded.last_modification, unit_price = exluded.unit_price, unity= excluded.unity;";
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                // Sauvegarder l'ingrédient dans la table `ingredient`
+                String sql = "INSERT INTO ingredient (id, name, last_modification, unit_price, unity) " +
+                        "VALUES (?, ?, ?, ?, ?) " +
+                        "ON CONFLICT (id) DO UPDATE SET " +
+                        "name = EXCLUDED.name, " +
+                        "last_modification = EXCLUDED.last_modification, " +
+                        "unit_price = EXCLUDED.unit_price, " +
+                        "unity = EXCLUDED.unity;";
+
+                try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    statement.setInt(1, entityToSave.getId());
+                    statement.setString(2, entityToSave.getName());
+                    statement.setTimestamp(3, Timestamp.valueOf(entityToSave.getLastModification()));
+                    statement.setDouble(4, entityToSave.getUnitPrice());
+                    statement.setString(5, entityToSave.getUnity().toString());
+                    statement.executeUpdate();
                 }
-                ingredients.add(findById(entityToSave.getId()));
+
+                // Sauvegarder les prix historiques dans la table `ingredient_price`
+                saveHistoricalPrices(connection, entityToSave.getId(), entityToSave.getHistoricalPrices());
+
+                // Sauvegarder les mouvements de stock dans la table `mouvement_stock`
+                saveStockMouvements(connection, entityToSave.getId(), entityToSave.getStockMouvements());
+
+                // Ajouter l'ingrédient sauvegardé à la liste
+                savedIngredients.add(findById(entityToSave.getId()));
             }
+
+            // Valider la transaction
+            connection.commit();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            // En cas d'erreur, annuler la transaction
+            try (Connection connection = dataSource.getConnection()) {
+                connection.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException("Erreur lors de l'annulation de la transaction", ex);
+            }
+            throw new RuntimeException("Erreur lors de la sauvegarde des ingrédients", e);
         }
-        return ingredients;
+        return savedIngredients;
+    }
+
+    private void saveHistoricalPrices(Connection connection, int ingredientId, List<IngredientPrice> historicalPrices) throws SQLException {
+        String sql = "INSERT INTO ingredient_price (id, price, date, ingredient_id) " +
+                "VALUES (?, ?, ?, ?) " +
+                "ON CONFLICT (id) DO UPDATE SET " +
+                "price = EXCLUDED.price, " +
+                "date = EXCLUDED.date, " +
+                "ingredient_id = EXCLUDED.ingredient_id;";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            for (IngredientPrice price : historicalPrices) {
+                statement.setInt(1, price.getId());
+                statement.setDouble(2, price.getPrice());
+                statement.setDate(3, Date.valueOf(price.getDate()));
+                statement.setInt(4, ingredientId);
+                statement.addBatch(); // Ajouter à la batch pour exécution groupée
+            }
+            statement.executeBatch(); // Exécuter tous les inserts en une seule fois
+        }
+    }
+
+    private void saveStockMouvements(Connection connection, int ingredientId, List<StockMouvement> stockMouvements) throws SQLException {
+        String sql = "INSERT INTO mouvement_stock (id, ingredient_id, mouvement_type, quantity, unity, mouvement_date) " +
+                "VALUES (?, ?, ?, ?, ?, ?) " +
+                "ON CONFLICT (id) DO UPDATE SET " +
+                "ingredient_id = EXCLUDED.ingredient_id, " +
+                "mouvement_type = EXCLUDED.mouvement_type, " +
+                "quantity = EXCLUDED.quantity, " +
+                "unity = EXCLUDED.unity, " +
+                "mouvement_date = EXCLUDED.mouvement_date;";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            for (StockMouvement mouvement : stockMouvements) {
+                statement.setInt(1, mouvement.getId());
+                statement.setInt(2, ingredientId);
+                statement.setString(3, mouvement.getMouvementType().toString());
+                statement.setDouble(4, mouvement.getQuantity());
+                statement.setString(5, mouvement.getUnity().toString());
+                statement.setTimestamp(6, Timestamp.valueOf(mouvement.getMouvementDate()));
+                statement.addBatch(); // Ajouter à la batch pour exécution groupée
+            }
+            statement.executeBatch(); // Exécuter tous les inserts en une seule fois
+        }
     }
 
     @Override
