@@ -193,6 +193,4 @@ public class IngredientDAO implements CrudOperation<Ingredient> {
             }
         }
     }
-
-
 }

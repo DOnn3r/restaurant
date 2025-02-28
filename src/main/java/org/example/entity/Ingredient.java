@@ -2,6 +2,7 @@ package org.example.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Ingredient {
@@ -128,6 +129,13 @@ public class Ingredient {
 
     public double getAvailableQuantity() {
         return getAvailableQuantity(LocalDate.now());
+    }
+
+    public void addStockMouvement(StockMouvement mouvement) {
+        if (this.stockMouvements == null) {
+            this.stockMouvements = new ArrayList<>();
+        }
+        this.stockMouvements.add(mouvement);
     }
 
     @Override
