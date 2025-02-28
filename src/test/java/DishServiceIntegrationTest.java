@@ -1,6 +1,7 @@
 import org.example.dao.DishDAO;
 import org.example.dao.DishIngredientDAO;
 import org.example.dao.IngredientDAO;
+import org.example.dao.StockMouvementDAO;
 import org.example.db.DataSource;
 import org.example.entity.*;
 import org.junit.jupiter.api.Order;
@@ -19,6 +20,7 @@ public class DishServiceIntegrationTest {
     private DishDAO dishDAO = new DishDAO();
     private IngredientDAO ingredientDAO = new IngredientDAO();
     private DishIngredientDAO dishIngredientDAO = new DishIngredientDAO();
+    private StockMouvementDAO stockMouvementDAO = new StockMouvementDAO();
     private DataSource dataSource = new DataSource();
 
     @Test
@@ -131,5 +133,26 @@ public class DishServiceIntegrationTest {
         // Vérifier la marge brute à une date antérieure (2024-12-01)
         double expectedMarginPast = 582.0; // 1500 (prix de vente) - (18 + 900) = 582
         assertEquals(expectedMarginPast, hotDog.getGrossMarginAtDate(LocalDate.of(2024, 12, 1)), 0.01);
+    }
+
+    @Test
+    public void testGetStockMouvementsByIngredient() {
+        int ingredientId = 1; // Saucisse
+        List<StockMouvement> mouvements = stockMouvementDAO.getStockMouvementsByIngredient(ingredientId);
+
+        // Vérifier que la liste n'est pas vide
+        assertFalse(mouvements.isEmpty(), "La liste des mouvements ne devrait pas être vide");
+
+        // Vérifier le nombre de mouvements pour cet ingrédient
+        assertEquals(1, mouvements.size(), "Il devrait y avoir 1 mouvement de stock pour l'ingrédient ID 1");
+
+        // Vérifier les détails du mouvement
+        StockMouvement mouvement = mouvements.get(0);
+        assertEquals(3, mouvement.getId());
+        assertEquals(1, mouvement.getIngredientId());
+        assertEquals(MouvementType.IN, mouvement.getMouvementType());
+        assertEquals(10000, mouvement.getQuantity());
+        assertEquals(Unity.G, mouvement.getUnity());
+        assertEquals(LocalDateTime.of(2025, 2, 1, 8, 0), mouvement.getMouvementDate());
     }
 }
