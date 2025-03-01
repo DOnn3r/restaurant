@@ -161,7 +161,7 @@ public class DishServiceIntegrationTest {
         // Créer des ingrédients avec des mouvements de stock (uniquement des entrées)
         Ingredient oeuf = new Ingredient(
                 3, "Oeuf", LocalDateTime.now(), 1000, Unity.U,
-                List.of(), // historicalPrices (vide pour cet exemple)
+                List.of(), // historicalPrices
                 List.of(
                         new StockMouvement(1, 3, MouvementType.IN, 100, Unity.U, LocalDateTime.of(2025, 2, 1, 8, 0))
                 )
@@ -169,7 +169,7 @@ public class DishServiceIntegrationTest {
 
         Ingredient pain = new Ingredient(
                 4, "Pain", LocalDateTime.now(), 1000, Unity.U,
-                List.of(), // historicalPrices (vide pour cet exemple)
+                List.of(), // historicalPrices
                 List.of(
                         new StockMouvement(2, 4, MouvementType.IN, 50, Unity.U, LocalDateTime.of(2025, 2, 1, 8, 0))
                 )
@@ -177,7 +177,7 @@ public class DishServiceIntegrationTest {
 
         Ingredient saucisse = new Ingredient(
                 1, "Saucisse", LocalDateTime.now(), 20, Unity.G,
-                List.of(), // historicalPrices (vide pour cet exemple)
+                List.of(), // historicalPrices
                 List.of(
                         new StockMouvement(3, 1, MouvementType.IN, 10000, Unity.G, LocalDateTime.of(2025, 2, 1, 8, 0))
                 )
@@ -200,7 +200,7 @@ public class DishServiceIntegrationTest {
 
     @Test
     public void testGetAvailableQuantity_WithSorties() {
-        // Créer des ingrédients avec des mouvements de stock (entrées et sorties)
+        // Créer des ingrédients avec des mouvements de stock
         Ingredient oeuf = new Ingredient(3, "Oeuf", LocalDateTime.now(), 1000, Unity.U, List.of(), List.of(
                 new StockMouvement(1, 3, MouvementType.IN, 100, Unity.U, LocalDateTime.of(2025, 2, 1, 8, 0)),
                 new StockMouvement(5, 3, MouvementType.OUT, 10, Unity.U, LocalDateTime.of(2025, 2, 2, 10, 0)),
@@ -218,28 +218,61 @@ public class DishServiceIntegrationTest {
         ));
 
         // Vérifier les quantités disponibles à la date du jour (2025-02-24)
-        assertEquals(80, oeuf.getAvailableQuantity(LocalDate.of(2025, 2, 24)), 0.01);
-        assertEquals(30, pain.getAvailableQuantity(LocalDate.of(2025, 2, 24)), 0.01);
-        assertEquals(10000, saucisse.getAvailableQuantity(LocalDate.of(2025, 2, 24)), 0.01);
-        assertEquals(20, huile.getAvailableQuantity(LocalDate.of(2025, 2, 24)), 0.01);
+        assertEquals(80, oeuf.getAvailableQuantity(LocalDate.of(2025, 3, 1)), 0.01);
+        assertEquals(30, pain.getAvailableQuantity(LocalDate.of(2025, 3, 1)), 0.01);
+        assertEquals(10000, saucisse.getAvailableQuantity(LocalDate.of(2025, 3, 1)), 0.01);
+        assertEquals(20, huile.getAvailableQuantity(LocalDate.of(2025, 3, 1)), 0.01);
     }
 
     @Test
     public void testAddStockMouvement() {
-        // Créer les nouveaux ingrédients
         Ingredient sel = new Ingredient(8, "Sel", LocalDateTime.now(), 2.5, Unity.G);
         Ingredient riz = new Ingredient(9, "Riz", LocalDateTime.now(), 3.5, Unity.G);
 
-        // Ajouter des mouvements de stock pour le sel
         sel.addStockMouvement(new StockMouvement(10, 8, MouvementType.IN, 1000, Unity.G, LocalDateTime.of(2025, 2, 24, 8, 0)));
         sel.addStockMouvement(new StockMouvement(11, 8, MouvementType.OUT, 200, Unity.G, LocalDateTime.of(2025, 2, 24, 10, 0)));
 
-        // Ajouter des mouvements de stock pour le riz
         riz.addStockMouvement(new StockMouvement(12, 9, MouvementType.IN, 5000, Unity.G, LocalDateTime.of(2025, 2, 24, 9, 0)));
         riz.addStockMouvement(new StockMouvement(13, 9, MouvementType.OUT, 1000, Unity.G, LocalDateTime.of(2025, 2, 24, 11, 0)));
 
-        // Vérifier les quantités disponibles à la date du jour (2025-02-24)
         assertEquals(800, sel.getAvailableQuantity(LocalDate.of(2025, 2, 24)), 0.01); // 1000 - 200 = 800
         assertEquals(4000, riz.getAvailableQuantity(LocalDate.of(2025, 2, 24)), 0.01); // 5000 - 1000 = 4000
+    }
+
+    @Test
+    public void testGetAvailableQuantity() {
+        Ingredient saucisse = new Ingredient(
+                1, "Saucisse", LocalDateTime.now(), 10000, Unity.G,
+                List.of(),
+                List.of(
+                        new StockMouvement(1, 1, MouvementType.IN, 5000, Unity.G, LocalDateTime.of(2025, 1, 1, 8, 0)),
+                        new StockMouvement(2, 1, MouvementType.OUT, 2000, Unity.G, LocalDateTime.of(2025, 1, 2, 10, 0))
+                )
+        );
+
+        Ingredient pain = new Ingredient(
+                4, "Pain", LocalDateTime.now(), 1000, Unity.U,
+                List.of(),
+                List.of(
+                        new StockMouvement(3, 4, MouvementType.IN, 100, Unity.U, LocalDateTime.of(2025, 1, 1, 8, 0)),
+                        new StockMouvement(4, 4, MouvementType.OUT, 50, Unity.U, LocalDateTime.of(2025, 1, 2, 10, 0))
+                )
+        );
+
+        Ingredient fromage = new Ingredient(
+                6, "Fromage", LocalDateTime.now(), 500, Unity.G,
+                List.of(),
+                List.of(
+                        new StockMouvement(5, 6, MouvementType.IN, 300, Unity.G, LocalDateTime.of(2025, 1, 1, 8, 0)),
+                        new StockMouvement(6, 6, MouvementType.OUT, 100, Unity.G, LocalDateTime.of(2025, 1, 2, 10, 0))
+                )
+        );
+
+        Dish hotDog = new Dish(1, "Hot Dog", 15000, List.of(
+                new DishIngredient(saucisse, 100, Unity.G),
+                new DishIngredient(pain, 1, Unity.U),
+                new DishIngredient(fromage, 50, Unity.G)
+        ));
+        assertEquals(4, hotDog.getAvailableQuantity(LocalDate.of(2025, 1, 3)));
     }
 }

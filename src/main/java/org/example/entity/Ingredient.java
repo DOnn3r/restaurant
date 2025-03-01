@@ -95,14 +95,6 @@ public class Ingredient {
         this.unity = unity;
     }
 
-    public List<IngredientPrice> getHistoricalPrice() {
-        return historicalPrices;
-    }
-
-    public void setHistoricalPrice(List<IngredientPrice> historicalPrice) {
-        this.historicalPrices = historicalPrice;
-    }
-
     public double getPriceAtDate(LocalDate date) {
         return historicalPrices.stream()
                 .filter(price -> !price.getDate().isAfter(date))

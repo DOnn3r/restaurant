@@ -1,6 +1,7 @@
 package org.example.entity;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Dish {
@@ -72,6 +73,16 @@ public class Dish {
 
     public double getGrossMargin() {
         return getTotalCostAtDate(LocalDate.now());
+    }
+
+    public int getAvailableQuantity(LocalDate date) {
+        return ingredients.stream()
+                .mapToInt(dishIngredient -> {
+                    double availableQuantity = dishIngredient.getIngredient().getAvailableQuantity(date);
+                    return (int) (availableQuantity / dishIngredient.getRequiredQuantity());
+                })
+                .min()
+                .orElse(0);
     }
 
     @Override
