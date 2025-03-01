@@ -138,6 +138,22 @@ public class Ingredient {
         this.stockMouvements.add(mouvement);
     }
 
+    public List<IngredientPrice> getHistoricalPrices() {
+        return historicalPrices;
+    }
+
+    public void setHistoricalPrices(List<IngredientPrice> historicalPrices) {
+        this.historicalPrices = historicalPrices;
+    }
+
+    public List<StockMouvement> getStockMouvements() {
+        return stockMouvements;
+    }
+
+    public void setStockMouvements(List<StockMouvement> stockMouvements) {
+        this.stockMouvements = stockMouvements;
+    }
+
     @Override
     public String toString() {
         return "Ingredient{" +
