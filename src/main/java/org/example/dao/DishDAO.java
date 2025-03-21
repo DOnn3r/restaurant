@@ -166,6 +166,24 @@ public class DishDAO implements CrudOperation<Dish>{
         return dishIngredients;
     }
 
+    public Dish getDishById(int dishId) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+        Statement statement = connection.createStatement()) {
+            try (ResultSet resultSet = statement.executeQuery("select d.id, d.name, d.price from dish where id = " + dishId)) {
+                Dish dish = new Dish();
+                while (resultSet.next()) {
+                    dish.setId(resultSet.getInt("id"));
+                    dish.setName(resultSet.getString("name"));
+                    dish.setUnitPrice(resultSet.getDouble("price"));
+                }
+                return dish;
+            }
+            catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     public Dish findByNameWithIngredients(String name) throws SQLException {
         String sql = "SELECT d.id, d.name, d.price " +
                 "FROM dish d " +

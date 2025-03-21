@@ -1,11 +1,3 @@
-    create table ingredient(
-        id int primary key,
-        name varchar,
-        last_modification timestamp,
-        unit_price decimal,
-        unity unit
-    );
-
 INSERT INTO Ingredient
 VALUES
     (1,'Saucisse','2025-01-01 00:00', 20 ,'G'),

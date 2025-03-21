@@ -10,10 +10,7 @@ import java.util.List;
 
 public class IngredientDAO implements CrudOperation<Ingredient> {
     private DataSource dataSource;
-
-    public IngredientDAO(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
+    private StockMouvementDAO stockMouvementDAO = new StockMouvementDAO();
 
     public IngredientDAO(){
         this.dataSource = new DataSource();
@@ -46,12 +43,8 @@ public class IngredientDAO implements CrudOperation<Ingredient> {
     public List<Ingredient> saveAll(List<Ingredient> entities) {
         List<Ingredient> savedIngredients = new ArrayList<>();
         try (Connection connection = dataSource.getConnection()) {
-            // Désactiver l'auto-commit pour gérer les transactions manuellement
             connection.setAutoCommit(false);
-
-            // Sauvegarder chaque ingrédient
             for (Ingredient entityToSave : entities) {
-                // Sauvegarder l'ingrédient dans la table `ingredient`
                 String sql = "INSERT INTO ingredient (id, name, last_modification, unit_price, unity) " +
                         "VALUES (?, ?, ?, ?, ?) " +
                         "ON CONFLICT (id) DO UPDATE SET " +
@@ -68,21 +61,15 @@ public class IngredientDAO implements CrudOperation<Ingredient> {
                     statement.setString(5, entityToSave.getUnity().toString());
                     statement.executeUpdate();
                 }
-
-                // Sauvegarder les prix historiques dans la table `ingredient_price`
                 saveHistoricalPrices(connection, entityToSave.getId(), entityToSave.getHistoricalPrices());
 
-                // Sauvegarder les mouvements de stock dans la table `mouvement_stock`
                 saveStockMouvements(connection, entityToSave.getId(), entityToSave.getStockMouvements());
 
-                // Ajouter l'ingrédient sauvegardé à la liste
                 savedIngredients.add(findById(entityToSave.getId()));
             }
 
-            // Valider la transaction
             connection.commit();
         } catch (SQLException e) {
-            // En cas d'erreur, annuler la transaction
             try (Connection connection = dataSource.getConnection()) {
                 connection.rollback();
             } catch (SQLException ex) {
@@ -155,24 +142,57 @@ public class IngredientDAO implements CrudOperation<Ingredient> {
         }
     }
 
-    public Ingredient findById(int id) throws SQLException {
-        String sql = "SELECT * FROM Ingredient WHERE id = ?";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return new Ingredient(
-                            rs.getInt("id"),
-                            rs.getString("name"),
-                            rs.getTimestamp("last_modified").toLocalDateTime(),
-                            rs.getDouble("price"),
-                            Unity.valueOf(rs.getString("unity"))
+    public Ingredient findById(int id) {
+        String sql = "SELECT * FROM ingredient WHERE id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    // Créer l'ingrédient avec les informations de base
+                    Ingredient ingredient = new Ingredient(
+                            resultSet.getInt("id"),
+                            resultSet.getString("name"),
+                            resultSet.getTimestamp("last_modification").toLocalDateTime(),
+                            resultSet.getDouble("unit_price"),
+                            Unity.valueOf(resultSet.getString("unity"))
                     );
+
+                    // Charger l'historique des prix
+                    List<IngredientPrice> historicalPrices = loadHistoricalPrices(connection, ingredient.getId());
+                    ingredient.setHistoricalPrices(historicalPrices);
+
+                    // Charger les mouvements de stock en utilisant StockMouvementDAO
+                    List<StockMouvement> stockMouvements = stockMouvementDAO.getStockMouvementsByIngredient(ingredient.getId());
+                    ingredient.setStockMouvements(stockMouvements);
+
+                    return ingredient;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la recherche de l'ingrédient par nom", e);
+        }
+        return null; // Retourner null si aucun ingrédient n'est trouvé
+    }
+
+    private List<IngredientPrice> loadHistoricalPrices(Connection connection, int ingredientId) throws SQLException {
+        String sql = "SELECT * FROM ingredient_price WHERE ingredient_id = ? ORDER BY date ASC";
+        List<IngredientPrice> historicalPrices = new ArrayList<>();
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, ingredientId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    historicalPrices.add(new IngredientPrice(
+                            rs.getInt("id"),
+                            rs.getDouble("price"),
+                            rs.getDate("date").toLocalDate()
+                    ));
                 }
             }
         }
-        return null;
+
+        return historicalPrices;
     }
 
     public List<Ingredient> findByDishId(int dishId) throws SQLException {

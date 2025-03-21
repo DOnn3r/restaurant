@@ -26,6 +26,12 @@ public class IngredientPrice {
         this.ingredient = ingredient;
     }
 
+    public IngredientPrice(int id, double price, LocalDate date) {
+        this.id = id;
+        this.price = price;
+        this.date = date;
+    }
+
     public int getId() {
         return id;
     }

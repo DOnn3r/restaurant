@@ -1,7 +1,6 @@
 package org.example.entity;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 public class Dish {
@@ -9,6 +8,15 @@ public class Dish {
     private String name;
     private double unitPrice;
     private List<DishIngredient> ingredients;
+    private DishOrderStatus status;
+
+    public Dish(int id, String name, double unitPrice, List<DishIngredient> ingredients, DishOrderStatus status) {
+        this.id = id;
+        this.name = name;
+        this.unitPrice = unitPrice;
+        this.ingredients = ingredients;
+        this.status = status;
+    }
 
     public Dish(int id, String name, double unitPrice, List<DishIngredient> ingredients) {
         this.id = id;
@@ -51,6 +59,14 @@ public class Dish {
 
     public List<DishIngredient> getIngredients() {
         return ingredients;
+    }
+
+    public DishOrderStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(DishOrderStatus status) {
+        this.status = status;
     }
 
     public void setIngredients(List<DishIngredient> ingredients) {
