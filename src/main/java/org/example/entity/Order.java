@@ -2,20 +2,19 @@ package org.example.entity;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 public class Order {
     private int id;
     private String reference;
-    private Date creationDate;
+    private LocalDateTime creationDate;
     private List<DishOrder> dishOrders;
     private List<OrderStatus> status;
     private LocalDateTime statusChange;
 
     public Order() {}
 
-    public Order(int id, String reference, Date creationDate, List<DishOrder> dishOrders, List<OrderStatus> status, LocalDateTime statusChange) {
+    public Order(int id, String reference, LocalDateTime creationDate, List<DishOrder> dishOrders, List<OrderStatus> status, LocalDateTime statusChange) {
         this.id = id;
         this.reference = reference;
         this.creationDate = creationDate;
@@ -40,11 +39,11 @@ public class Order {
         this.reference = reference;
     }
 
-    public Date getCreationDate() {
+    public LocalDateTime getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(Date creationDate) {
+    public void setCreationDate(LocalDateTime creationDate) {
         this.creationDate = creationDate;
     }
 
@@ -94,6 +93,6 @@ public class Order {
         OrderStatus latestStatus = status.stream()
                 .max(Comparator.comparing(OrderStatus::getDateOrderStatus))
                 .orElse(null);
-        return latestStatus != null && latestStatus.getStatus() == StatusType.CONFIRMATED;
+        return latestStatus != null && latestStatus.getStatus() == StatusType.CONFIRMED;
     }
 }

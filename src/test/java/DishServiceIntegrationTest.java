@@ -1,10 +1,6 @@
-import org.example.dao.DishDAO;
-import org.example.dao.DishIngredientDAO;
-import org.example.dao.IngredientDAO;
-import org.example.dao.StockMouvementDAO;
+import org.example.dao.*;
 import org.example.db.DataSource;
 import org.example.entity.*;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 
 import java.sql.*;
@@ -274,5 +270,111 @@ public class DishServiceIntegrationTest {
                 new DishIngredient(fromage, 50, Unity.G)
         ));
         assertEquals(4, hotDog.getAvailableQuantity(LocalDate.of(2025, 1, 3)));
+    }
+
+    @Test
+    public void testDishOrderCreation() {
+        Dish dish = new Dish(1, "Hot Dog", 15000, List.of());
+        List<DishOrderStatus> statusList = List.of(
+                new DishOrderStatus(1, 1, StatusType.CREATED, LocalDateTime.now())
+        );
+        DishOrder dishOrder = new DishOrder(1, dish, 2, statusList, LocalDateTime.now());
+
+        assertEquals(1, dishOrder.getId());
+        assertEquals(dish, dishOrder.getDish());
+        assertEquals(2, dishOrder.getQuantity());
+        assertEquals(statusList, dishOrder.getDishStatus());
+    }
+
+    @Test
+    public void testGetActualStatus() {
+        DishOrderStatus status1 = new DishOrderStatus(1, 1, StatusType.CREATED, LocalDateTime.of(2025, 1, 1, 10, 0));
+        DishOrderStatus status2 = new DishOrderStatus(2, 1, StatusType.CONFIRMED, LocalDateTime.of(2025, 1, 1, 11, 0));
+        List<DishOrderStatus> statusList = List.of(status1, status2);
+
+        DishOrder dishOrder = new DishOrder(1, new Dish(), 2, statusList, LocalDateTime.now());
+
+        assertEquals(StatusType.CONFIRMED, dishOrder.getActualStatus().getStatus());
+    }
+
+    @Test
+    public void testDishOrderStatusCreation() {
+        DishOrderStatus status = new DishOrderStatus(1, 1, StatusType.CREATED, LocalDateTime.now());
+
+        assertEquals(1, status.getId());
+        assertEquals(1, status.getDishId());
+        assertEquals(StatusType.CREATED, status.getStatus());
+        assertNotNull(status.getDateDishOrderStatus());
+    }
+
+    @Test
+    public void testOrderCreation() {
+        Dish dish = new Dish(1, "Hot Dog", 15000, List.of());
+        DishOrder dishOrder = new DishOrder(1, dish, 2, List.of(), LocalDateTime.now());
+        org.example.entity.Order order = new Order(1, "REF123", LocalDateTime.of(2025, 2, 1, 8, 0), List.of(dishOrder), List.of(), LocalDateTime.now());
+
+        assertEquals(1, order.getId());
+        assertEquals("REF123", order.getReference());
+        assertEquals(1, order.getDishOrders().size());
+    }
+
+    @Test
+    public void testGetTotalAmount() {
+        Dish dish = new Dish(1, "Hot Dog", 15000, List.of());
+        DishOrder dishOrder = new DishOrder(1, dish, 2, List.of(), LocalDateTime.now());
+        org.example.entity.Order order = new org.example.entity.Order(1, "REF123", LocalDateTime.now(), List.of(dishOrder), List.of(), LocalDateTime.now());
+
+        assertEquals(30000, order.getTotalAmount(), 0.01);
+    }
+
+    @Test
+    public void testGetOrderStatus() {
+        OrderStatus status1 = new OrderStatus(1, 1, StatusType.CREATED, LocalDateTime.of(2025, 1, 1, 10, 0));
+        OrderStatus status2 = new OrderStatus(2, 1, StatusType.CONFIRMED, LocalDateTime.of(2025, 1, 1, 11, 0));
+        org.example.entity.Order order = new org.example.entity.Order(1, "REF123", LocalDateTime.now(), List.of(), List.of(status1, status2), LocalDateTime.now());
+
+        assertEquals(StatusType.CONFIRMED, order.getOrderStatus().getStatus());
+    }
+
+    @Test
+    public void testFindByReference() throws SQLException {
+        OrderDAO orderDAO = new OrderDAO(new DataSource());
+        org.example.entity.Order order = orderDAO.findByReference("CMD123");
+
+        assertNotNull(order);
+        assertEquals("CMD123", order.getReference());
+    }
+
+    @Test
+    public void testGetDishOrdersByOrderId() throws SQLException {
+        OrderDAO orderDAO = new OrderDAO(new DataSource());
+        List<DishOrder> dishOrders = orderDAO.getDishOrdersByOrderId(1);
+
+        assertNotNull(dishOrders);
+        assertFalse(dishOrders.isEmpty());
+    }
+
+    @Test
+    public void testGetDishOrderStatusByDishOrderId() throws SQLException {
+        DishOrderDAO dishOrderDAO = new DishOrderDAO();
+        List<DishOrderStatus> statusList = dishOrderDAO.getDishOrderStatusByDishOrderId(3);
+
+        assertNotNull(statusList);
+        assertFalse(statusList.isEmpty());
+    }
+
+    @Test
+    public void testSaveAllDishOrders() throws SQLException {
+        DishOrderDAO dishOrderDAO = new DishOrderDAO();
+        Order order = new Order(1, "REF123", LocalDateTime.of(2025, 2, 1, 8, 0), List.of(), List.of(), LocalDateTime.now());
+        Dish dish = new Dish(1, "Hot Dog", 15000, List.of());
+        DishOrder dishOrder = new DishOrder(1, 1, 1 , dish, 2, List.of(), LocalDateTime.now());
+
+        List<DishOrder> dishOrders = List.of(dishOrder);
+
+        List<DishOrder> savedOrders = dishOrderDAO.saveAll(dishOrders);
+
+        assertNotNull(savedOrders);
+        assertEquals(3, dishOrderDAO.getAll().size());
     }
 }

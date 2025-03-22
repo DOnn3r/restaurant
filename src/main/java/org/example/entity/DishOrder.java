@@ -17,7 +17,7 @@ public class DishOrder {
         this.id = id;
         this.dish = dish;
         this.quantity = quantity;
-        this.dishStatus = (List<DishOrderStatus>) dishStatus;
+        this.dishStatus = dishStatus;
         this.statusChange = statusChange;
     }
 
@@ -27,11 +27,20 @@ public class DishOrder {
         this.dishId = dishId;
         this.dish = dish;
         this.quantity = quantity;
-        this.dishStatus = (List<DishOrderStatus>) dishStatus;
+        this.dishStatus = dishStatus;
+        this.statusChange = statusChange;
+    }
+
+    public DishOrder(int id, int orderId, int dishId, double quantity, LocalDateTime statusChange) {
+        this.id = id;
+        this.orderId = orderId;
+        this.dishId = dishId;
+        this.quantity = quantity;
         this.statusChange = statusChange;
     }
 
     public DishOrder() {}
+
 
     // Getters et Setters
     public int getId() {

@@ -27,7 +27,7 @@ public class OrderDAO implements CrudOperation<Order> {
                 if(rs.next()){
                     order.setId(rs.getInt("id"));
                     order.setReference(rs.getString("reference"));
-                    order.setCreationDate(rs.getDate("creation_date"));
+                    order.setCreationDate(rs.getTimestamp("creation_date").toLocalDateTime());
                     order.setStatusChange(rs.getTimestamp("status_change").toLocalDateTime());
                     List<DishOrder> dishOrders = getDishOrdersByOrderId(order.getId());
                     order.setDishOrders(dishOrders);
@@ -54,7 +54,7 @@ public class OrderDAO implements CrudOperation<Order> {
                 try(PreparedStatement statement = connection.prepareStatement(sql)){
                     statement.setInt(1, order.getId());
                     statement.setString(2, order.getReference());
-                    statement.setDate(3, new java.sql.Date(order.getCreationDate().getTime()));
+                    statement.setTimestamp(3, Timestamp.valueOf(order.getCreationDate()));
                     statement.setTimestamp(4, java.sql.Timestamp.valueOf(order.getStatusChange()));
                     statement.executeUpdate();
                 }
@@ -104,7 +104,7 @@ public class OrderDAO implements CrudOperation<Order> {
                     Order order = new Order();
                     order.setId(rs.getInt("id"));
                     order.setReference(rs.getString("reference"));
-                    order.setCreationDate(rs.getDate("creation_date"));
+                    order.setCreationDate(rs.getTimestamp("creation_date").toLocalDateTime());
                     order.setStatusChange(rs.getTimestamp("status_change").toLocalDateTime());
                     List<DishOrder> dishOrders = getDishOrdersByOrderId(order.getId());
                     order.setDishOrders(dishOrders);
@@ -117,7 +117,7 @@ public class OrderDAO implements CrudOperation<Order> {
         }
     }
 
-    private List<DishOrder> getDishOrdersByOrderId(int orderId) throws SQLException {
+    public List<DishOrder> getDishOrdersByOrderId(int orderId) throws SQLException {
         String sql = "SELECT * FROM dish_order WHERE order_id = ?";
         List<DishOrder> dishOrders = new ArrayList<>();
 
@@ -176,7 +176,7 @@ public class OrderDAO implements CrudOperation<Order> {
                 if (rs.next()) {
                     order.setId(rs.getInt("id"));
                     order.setReference(rs.getString("reference"));
-                    order.setCreationDate(rs.getDate("creation_date"));
+                    order.setCreationDate(rs.getTimestamp("creation_date").toLocalDateTime());
                     order.setStatusChange(rs.getTimestamp("status_change").toLocalDateTime());
 
                     // Récupérer les plats associés à la commande

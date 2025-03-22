@@ -9,7 +9,7 @@ import java.util.List;
 
 public class DishOrderDAO implements CrudOperation<DishOrder> {
     private DataSource dataSource;
-    private DishDAO dishDAO;
+    private DishDAO dishDAO = new DishDAO();
 
     public DishOrderDAO() {this.dataSource = new DataSource();}
     public DishOrderDAO(DataSource dataSource) {
@@ -19,28 +19,28 @@ public class DishOrderDAO implements CrudOperation<DishOrder> {
     @Override
     public List<DishOrder> getAll() throws SQLException {
         String sql = "SELECT * FROM dish_order";
+        List<DishOrder> dishOrders = new ArrayList<>();
+
         try (Connection connection = dataSource.getConnection();
-            PreparedStatement statement = connection.prepareStatement(sql)) {
+             PreparedStatement statement = connection.prepareStatement(sql)) {
             try (ResultSet rs = statement.executeQuery()) {
-                List<DishOrder> dishOrders = new ArrayList<>();
-                while (rs.next() == true) {
+                while (rs.next()) {
                     DishOrder dishOrder = new DishOrder();
                     dishOrder.setId(rs.getInt("id"));
-                    dishOrder.setDishId(rs.getInt("dish_id"));
                     dishOrder.setOrderId(rs.getInt("order_id"));
-                    Dish dish = dishDAO.getDishById(rs.getInt("dish_id")); // TODO
-                    dishOrder.setDish(dish);
-                    List<DishOrderStatus> dishStatusList = getDishOrderStatusByDishOrderId(rs.getInt("id")); // À implémenter
-                    dishOrder.setDishStatus(dishStatusList);
+                    dishOrder.setDishId(rs.getInt("dish_id"));
+                    dishOrder.setQuantity(rs.getDouble("quantity"));
                     dishOrder.setStatusChange(rs.getTimestamp("status_change").toLocalDateTime());
+                    dishOrders.add(dishOrder);
                 }
-                return dishOrders;
             }
         }
+
+        return dishOrders;
     }
 
     public List<DishOrderStatus> getDishOrderStatusByDishOrderId(int dishOrderId) throws SQLException {
-        String sql = "SELECT * FROM dish_order_status WHERE dish_order_id = ?";
+        String sql = "SELECT id, dish_order_id, status, status_change FROM dish_order_status WHERE dish_order_id = ?";
         List<DishOrderStatus> dishOrderStatusList = new ArrayList<>();
 
         try (Connection connection = dataSource.getConnection();
@@ -52,7 +52,7 @@ public class DishOrderDAO implements CrudOperation<DishOrder> {
                             rs.getInt("id"),
                             rs.getInt("dish_order_id"),
                             StatusType.valueOf(rs.getString("status")),
-                            rs.getTimestamp("date_dish_order_status").toLocalDateTime()
+                            rs.getTimestamp("status_change").toLocalDateTime() // Utilisez le bon nom de colonne
                     );
                     dishOrderStatusList.add(dishOrderStatus);
                 }
@@ -63,23 +63,23 @@ public class DishOrderDAO implements CrudOperation<DishOrder> {
     }
 
     public List<DishOrder> saveAll(List<DishOrder> dishOrders) throws SQLException {
-        List<DishOrder> orders = new ArrayList<DishOrder>();
+        List<DishOrder> orders = new ArrayList<>();
         try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);
             for (DishOrder dishOrder : dishOrders) {
-                String sql = "INSERT INTO dish_order (id, order_id, dish_id, dish_status, status_change) " +
+                String sql = "INSERT INTO dish_order (id, order_id, dish_id, quantity, status_change) " +
                         "VALUES (?, ?, ?, ?, ?) " +
                         "ON CONFLICT (id) DO UPDATE " +
                         "SET order_id = EXCLUDED.order_id, " +
                         "    dish_id = EXCLUDED.dish_id, " +
-                        "    dish_status = EXCLUDED.dish_status, " +
+                        "    quantity = EXCLUDED.quantity, " +
                         "    status_change = EXCLUDED.status_change;";
                 try (PreparedStatement statement = connection.prepareStatement(sql)) {
                     statement.setInt(1, dishOrder.getId());
                     statement.setInt(2, dishOrder.getOrderId());
                     statement.setInt(3, dishOrder.getDishId());
-                    statement.setString(4, dishOrder.getDishStatus().toString());
-                    statement.setTimestamp(5, Timestamp.valueOf(dishOrder.getStatusChange()));
+                    statement.setDouble(4, dishOrder.getQuantity()); // Quantité
+                    statement.setTimestamp(5, Timestamp.valueOf(dishOrder.getStatusChange())); // Timestamp
                     statement.executeUpdate();
                 }
             }
