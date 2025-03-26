@@ -100,7 +100,7 @@ public class IngredientDAO implements CrudOperation<Ingredient> {
         }
     }
 
-    private void saveStockMouvements(Connection connection, int ingredientId, List<StockMouvement> stockMouvements) throws SQLException {
+    public void saveStockMouvements(Connection connection, int ingredientId, List<StockMouvement> stockMouvements) throws SQLException {
         String sql = "INSERT INTO mouvement_stock (id, ingredient_id, mouvement_type, quantity, unity, mouvement_date) " +
                 "VALUES (?, ?, ?, ?, ?, ?) " +
                 "ON CONFLICT (id) DO UPDATE SET " +

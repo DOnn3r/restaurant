@@ -23,6 +23,12 @@ public class Order {
         this.statusChange = statusChange;
     }
 
+    public Order(int orderId, String reference, LocalDateTime now) {
+        this.id = id;
+        this.reference = reference;
+        this.creationDate = now;
+    }
+
     public int getId() {
         return id;
     }

@@ -4,6 +4,7 @@ import org.example.db.DataSource;
 import org.example.entity.*;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -18,11 +19,11 @@ public class OrderDAO implements CrudOperation<Order> {
     }
 
     public Order findByReference(String reference) throws SQLException {
-        String sql = "SELECT * FROM \"order\" WHERE reference = ?";
+        String sql = "SELECT * FROM \"order\" where reference ilike ?";
         Order order = new Order();
         try(Connection connection = dataSource.getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)){
-            statement.setString(1, reference);
+            statement.setString(1, "%"+reference+"%");
             try(ResultSet rs = statement.executeQuery()){
                 if(rs.next()){
                     order.setId(rs.getInt("id"));
@@ -38,7 +39,6 @@ public class OrderDAO implements CrudOperation<Order> {
         }
         return order;
     }
-
 
     @Override
     public List<Order> saveAll(List<Order> entities) throws SQLException {
@@ -58,6 +58,27 @@ public class OrderDAO implements CrudOperation<Order> {
                     statement.setTimestamp(4, java.sql.Timestamp.valueOf(order.getStatusChange()));
                     statement.executeUpdate();
                 }
+            }
+            connection.commit();
+        }
+        return orders;
+    }
+
+    public Order saveOne(Order entities) throws SQLException {
+        Order orders = new Order();
+        try (Connection connection = dataSource.getConnection()){
+            connection.setAutoCommit(false);
+            String sql = "insert into 'order' values(?,?,?,?,?,?,?,?)" +
+                    "on conflict (id) do update" +
+                    "set creation_date = excluded.creation_date" +
+                    " total_amount = excluded.total_amount" +
+                    " status_change = excluded.status_change";
+            try(PreparedStatement statement = connection.prepareStatement(sql)){
+                statement.setInt(1, entities.getId());
+                statement.setString(2, entities.getReference());
+                statement.setTimestamp(3, Timestamp.valueOf(entities.getCreationDate()));
+                statement.setTimestamp(4, java.sql.Timestamp.valueOf(entities.getStatusChange()));
+                statement.executeUpdate();
             }
             connection.commit();
         }
@@ -91,6 +112,13 @@ public class OrderDAO implements CrudOperation<Order> {
     @Override
     public Order findByName(String name) throws SQLException {
         return null;
+    }
+
+    public void save(DishOrder dishOrders, String reference, int orderId) throws SQLException {
+        Order order = new Order(orderId, reference, LocalDateTime.now());
+        saveOne(order);
+        order.setDishOrders((List<DishOrder>) dishOrders);
+        addOrUpdateDishOrder(orderId, dishOrders);
     }
 
     @Override

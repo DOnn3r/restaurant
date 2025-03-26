@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="SqlDialectMappings">
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/a8329bdf-1b2d-492e-a9b6-fbd1887adafe/console.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/src/main/java/org/example/db/migration/6_create_table_order.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/src/main/java/org/example/db/migration/create_enum_status.sql" dialect="PostgreSQL" />
   </component>

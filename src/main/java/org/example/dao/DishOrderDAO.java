@@ -110,4 +110,20 @@ public class DishOrderDAO implements CrudOperation<DishOrder> {
         }
         return dishDAO.getDishById(id);
     }
+
+    public Order getOrderReferenceByOrderId(int orderId) throws SQLException {
+        String sql = "SELECT reference FROM 'order' inner join dish_order on 'order'.id = dish_order.order_id";
+        Order order = new Order();
+        try(Connection connection = dataSource.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql)){
+            statement.setInt(1, orderId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    order.setId(rs.getInt("id"));
+                    order.setReference(rs.getString("reference"));
+                }
+            }
+        }
+        return order;
+    }
 }

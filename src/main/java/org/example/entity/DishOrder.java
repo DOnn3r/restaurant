@@ -1,5 +1,6 @@
 package org.example.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -12,6 +13,7 @@ public class DishOrder {
     private double quantity; // Quantité commandée
     private List<DishOrderStatus> dishStatus; // Liste des statuts du plat dans la commande
     private LocalDateTime statusChange; // Date du dernier changement de statut
+    private Order order;
 
     public DishOrder(int id, Dish dish, double quantity, List<DishOrderStatus> dishStatus, LocalDateTime statusChange) {
         this.id = id;
@@ -39,8 +41,23 @@ public class DishOrder {
         this.statusChange = statusChange;
     }
 
+    public DishOrder(int id, Order order, int dishId, double quantity, LocalDateTime statusChange) {
+        this.id = id;
+        this.order = order;
+        this.dishId = dishId;
+        this.quantity = quantity;
+        this.statusChange = statusChange;
+    }
+
     public DishOrder() {}
 
+    public Order getOrder() {
+        return order;
+    }
+
+    public void setOrder(Order order) {
+        this.order = order;
+    }
 
     // Getters et Setters
     public int getId() {

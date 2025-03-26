@@ -196,22 +196,7 @@ public class DishServiceIntegrationTest {
 
     @Test
     public void testGetAvailableQuantity_WithSorties() {
-        // Créer des ingrédients avec des mouvements de stock
-        Ingredient oeuf = new Ingredient(3, "Oeuf", LocalDateTime.now(), 1000, Unity.U, List.of(), List.of(
-                new StockMouvement(1, 3, MouvementType.IN, 100, Unity.U, LocalDateTime.of(2025, 2, 1, 8, 0)),
-                new StockMouvement(5, 3, MouvementType.OUT, 10, Unity.U, LocalDateTime.of(2025, 2, 2, 10, 0)),
-                new StockMouvement(6, 3, MouvementType.OUT, 10, Unity.U, LocalDateTime.of(2025, 2, 3, 15, 0))
-        ));
-        Ingredient pain = new Ingredient(4, "Pain", LocalDateTime.now(), 1000, Unity.U, List.of(), List.of(
-                new StockMouvement(2, 4, MouvementType.IN, 50, Unity.U, LocalDateTime.of(2025, 2, 1, 8, 0)),
-                new StockMouvement(7, 4, MouvementType.OUT, 20, Unity.U, LocalDateTime.of(2025, 2, 5, 16, 0))
-        ));
-        Ingredient saucisse = new Ingredient(1, "Saucisse", LocalDateTime.now(), 20, Unity.G, List.of(), List.of(
-                new StockMouvement(3, 1, MouvementType.IN, 10000, Unity.G, LocalDateTime.of(2025, 2, 1, 8, 0))
-        ));
-        Ingredient huile = new Ingredient(2, "Huile", LocalDateTime.now(), 10000, Unity.L, List.of(), List.of(
-                new StockMouvement(4, 2, MouvementType.IN, 20, Unity.L, LocalDateTime.of(2025, 2, 1, 8, 0))
-        ));
+        ingredientDAO.saveStockMouvements();
 
         // Vérifier les quantités disponibles à la date du jour (2025-02-24)
         assertEquals(80, oeuf.getAvailableQuantity(LocalDate.of(2025, 3, 1)), 0.01);
